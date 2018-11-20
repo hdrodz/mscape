@@ -1,0 +1,14 @@
+/* Hide page margins */
+html, body {
+    overflow: hidden;
+    margin: 0px;
+}
+
+/* Canvas fills the screen */
+canvas {
+    width: 100vw;
+    height: 100vh;
+    display: block;
+    /* This helps us identify canvas errors */
+    background-color: cornflowerblue;
+}
