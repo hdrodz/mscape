@@ -98,12 +98,20 @@ class SceneObject {
     /**
      * Create a RenderObject
      * @param {String} name Name of the object.
-     * @param {SceneObject} parent Parent of this object. May be null.
      */
-    constructor(name, parent) {
+    constructor(name) {
+        /**
+         * Name of the object, for debugging purposes.
+         */
         this.name = name;
-        this.parent = parent;
+        /**
+         * 3D transformation of the object, relative to its parent.
+         */
         this.transform = new Transform();
+        /**
+         * Child objects of this object.
+         */
+        this.children = [];
     }
 
     /**
