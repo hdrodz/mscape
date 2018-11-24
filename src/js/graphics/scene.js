@@ -13,10 +13,29 @@ class Transform {
      * no rotation, and a scale of 1.
      */
     constructor() {
+        /**
+         * True if a mutation has been performed on the Transform and the
+         * matrix has not yet been updated.
+         */
         this.dirty = false;
+        /**
+         * Internal transformation matrix of the Transform. Because this value
+         * is not automatically updated, you should use Transform.matrix to
+         * access the internal matrix as that property will update this value
+         * if necessary and return the proper transformation matrix.
+         */
         this.mat = mat4.create();
+        /**
+         * Translation from the origin.
+         */
         this.translate = vec3.create();
+        /**
+         * Rotation about the origin.
+         */
         this.rotate = quat.create();
+        /**
+         * Scale.
+         */
         this.scale = vec3.fromValues(1, 1, 1);
     }
 
