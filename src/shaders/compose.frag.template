@@ -1,0 +1,18 @@
+//
+// THIS IS A TEMPLATE FILE -- therefore it won't work directly compiled.
+// There is code associated with this file to fill it in
+//
+
+varying vec2 position_norm;
+
+$TEXTURE_DECLARATIONS
+
+void main() {
+    vec4 cur = vec4(0.);
+    vec4 output = vec4(0.);
+    vec4 next;
+
+    $COMPOSITION_STATEMENTS
+
+    gl_FragColor = output;
+}

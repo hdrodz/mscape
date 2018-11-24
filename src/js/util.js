@@ -58,3 +58,13 @@ function loadFileBlobAsync(path) {
         xhr.send(null);
     });
 }
+
+/**
+ * Handler for a Promise's reject event that alerts a promise failed and throws
+ * the reason.
+ * @param {String} reason Reason from Promise reject.
+ */
+function alertOnReject(reason) {
+    alert(`Promise failed: ${reason}`);
+    throw `Promise failed: ${reason}`;
+}
