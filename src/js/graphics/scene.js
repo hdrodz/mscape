@@ -24,7 +24,12 @@ class Transform {
          * access the internal matrix as that property will update this value
          * if necessary and return the proper transformation matrix.
          */
-        this.mat = mat4.create();
+        this._mat = mat4.create();
+        /**
+         * Inverse of the internal transformation matrix of the Transform. This
+         * is used to unapply the transformation when walking the object tree.
+         */
+        this._inv = mat4.create();
         /**
          * Translation from the origin.
          */
@@ -108,15 +113,34 @@ class Transform {
     }
 
     /**
+     * Update the internal and internal inverse matrices and clear the dirty
+     * flag.
+     */
+    refreshMatrices() {
+        mat4.fromRotationTranslationScale(this._mat, this.rotate,
+            this.tranlsate, this.scale);
+        mat4.inv(this._inv, this._mat);
+        this.dirty = false;
+    }
+
+    /**
      * Updates the internal transformation matrix if necessary and fetches it.
      */
     get matrix() {
         if (this.dirty) {
-            mat4.fromRotationTranslationScale(this.mat, this.rotate,
-                this.tranlsate, this.scale);
-            this.dirty = false;
+            this.refreshMatrices();
         }
-        return this.mat;
+        return this._mat;
+    }
+
+    /**
+     * Updates the internal inverse matrix if necessary and fetches it.
+     */
+    get inverseMatrix() {
+        if (this.dirty) {
+            this.refreshMatrices();
+        }
+        return this._inv;
     }
 }
 
@@ -152,6 +176,12 @@ class SceneObject {
     /**
      * Render the object.
      * @param {Number} now The time since the start of the app, in seconds.
+     * @param {mat4} totalTrans The cumulative transform matrix. This is the
+     *                          matrix combining all of the transforms from the
+     *                          perspective transformation to the camera
+     *                          transformation, to the transformation of each
+     *                          of this object's parent objects when walking
+     *                          the tree.
      */
-    render(now) { }
+    render(now, totalTrans) { }
 }
