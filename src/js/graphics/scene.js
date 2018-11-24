@@ -185,3 +185,57 @@ class SceneObject {
      */
     render(now, totalTrans) { }
 }
+
+/**
+ * A tree of objects that can be updated and rendered simultaneously.
+ */
+class Scene extends RenderLayer {
+    constructor() {
+        /**
+         * The root of the scene. Has no transformation and serves only to hold
+         * children.
+         * @type {SceneObject}
+         */
+        this.root = new SceneObject("origin");
+        /**
+         * The cumulative transformation, used during rendering.
+         * @type {mat4}
+         */
+        this.totalTrans = mat4.create();
+        // TODO: setup cameras
+    }
+
+    /**
+     * Update and render the nodes of this scene.
+     * @param {Number} now Application time, in seconds.
+     */
+    render(now) {
+        this.update(now, this.root);
+        this.renderNode(now, this.root);
+    }
+
+    /**
+     * Updates a node and its children.
+     * @param {Number} now Application time, in seconds.
+     * @param {SceneObject} node Node to update.
+     */
+    update(now, node) {
+        node.update(now);
+        node.children.forEach(child => this.update(now, child));
+    }
+
+    /**
+     * Renders a node and its children.
+     * @param {Number} now Application time, in seconds.
+     * @param {SceneObject} node Node to render.
+     */
+    renderNode(now, node) {
+        // Apply this node's transformation matrix
+        mat4.mul(this.totalTrans, node.transform.matrix, this.totalTrans);
+        // Render the node and its children
+        node.render(now, this.totalTrans);
+        node.children.forEach(child => this.render(now, child));
+        // De-apply this node's transformation matrix
+        mat4.mul(this.totalTrans, node.transform.inverseMatrix, this.totalTrans);
+    }
+}
