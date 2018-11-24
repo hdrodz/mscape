@@ -1,28 +1,14 @@
 "use strict";
 
 /**
- * Base interface for objects that expose some degree of renderer
- * interactivity, i.e. location of the transform matrix uniform.
- */
-class RenderingContext {
-    /**
-     * Gets the transformation matrix uniform location.
-     * @returns {WebGLUniformLocation} The location of the uniform that takes
-     *                                 in the transformation matrix.
-     */
-    get transformMatrixUniformLocation() { return undefined; }
-}
-
-/**
  * An atomic part of the rendering system. Renders its contents individually.
  */
 class RenderLayer {
     /**
      * Renders this layer.
      * @param {Number} now The application time, in seconds.
-     * @param {RenderingContext} ctx Rendering context of this render pass.
      */
-    render(now, ctx) { }
+    render(now) { }
 }
 
 /**
@@ -49,7 +35,7 @@ const BlendMode = Object.freeze({
 /**
  * Coordinates rendering things onto the screen.
  */
-class Renderer extends RenderingContext {
+class Renderer {
     /**
      * Create a new renderer.
      * @param {Number} renderWidth Rendered scene width, in pixels.
@@ -258,7 +244,7 @@ class Renderer extends RenderingContext {
      */
     renderLayer(now, index) {
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.buffers[index].framebuffer);
-        this.layers[index].render(now, this);
+        this.layers[index].render(now);
     }
 
     /**
