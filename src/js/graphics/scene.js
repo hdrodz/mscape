@@ -13,6 +13,7 @@ class Transform {
      * no rotation, and a scale of 1.
      */
     constructor() {
+        this.dirty = false;
         this.mat = mat4.create();
         this.translate = vec3.create();
         this.rotate = quat.create();
@@ -26,6 +27,7 @@ class Transform {
      */
     scaleAbs(v) {
         vec3.copy(this.scale, v);
+        this.dirty = true;
         return this;
     }
 
@@ -36,6 +38,7 @@ class Transform {
      */
     scaleBy(v) {
         vec3.mul(this.scale, this.scale, v);
+        this.dirty = true;
         return this;
     }
 
@@ -46,6 +49,7 @@ class Transform {
      */
     rotateAbs(q) {
         quat.copy(this.rotate, q);
+        this.dirty = true;
         return this;
     }
 
@@ -57,6 +61,7 @@ class Transform {
      */
     rotateBy(q) {
         quat.mul(this.rotate, this.rotate, q);
+        this.dirty = true;
         return this;
     }
 
@@ -67,6 +72,7 @@ class Transform {
      */
     translateAbs(v) {
         vec3.copy(this.translate, v);
+        this.dirty = true;
         return this;
     }
 
@@ -78,15 +84,19 @@ class Transform {
      */
     translateBy(v) {
         vec3.add(this.translate, this.translate, v);
+        this.dirty = true;
         return this;
     }
 
     /**
-     * Updates the internal transformation matrix and fetches it.
+     * Updates the internal transformation matrix if necessary and fetches it.
      */
     get matrix() {
-        mat4.fromRotationTranslationScale(this.mat, this.rotate,
-            this.tranlsate, this.scale);
+        if (this.dirty) {
+            mat4.fromRotationTranslationScale(this.mat, this.rotate,
+                this.tranlsate, this.scale);
+            this.dirty = false;
+        }
         return this.mat;
     }
 }
