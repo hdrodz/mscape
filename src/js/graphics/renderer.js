@@ -256,7 +256,7 @@ class Renderer {
         gl.useProgram(this.composeProgram);
         // Bind the textures
         this.buffers.forEach((buf, i) => {
-            gl.activeTexture(gl.TEXUTRE0);
+            gl.activeTexture(gl.TEXUTRE0 + i);
             gl.bindTexture(gl.TEXTURE_2D, buf.texture);
             gl.uniform1i(this.layerUniforms, i);
         });

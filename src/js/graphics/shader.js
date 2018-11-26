@@ -61,7 +61,7 @@ function tryCompileShader(type, text) {
     return out;
 }
 
-PROGRAMS = {}
+const PROGRAMS = {}
 
 /**
  * Compiles 

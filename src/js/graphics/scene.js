@@ -53,8 +53,9 @@ class Scene extends RenderLayer {
     /**
      * Creates a new scene.
      * @param {Camera} camera Set-up camera used for the scene.
+     * @param {WebGLProgram} renderProgram Program to use for rendering.
      */
-    constructor(camera) {
+    constructor(camera, renderProgram) {
         /**
          * The root of the scene. Has no transformation and serves only to hold
          * children.
@@ -71,6 +72,16 @@ class Scene extends RenderLayer {
          * @type {Camera}
          */
         this.camera = camera;
+        /**
+         * Program used by default when rendering.
+         * @type {WebGLProgram}
+         */
+        this.renderProgram = renderProgram;
+        /**
+         * Location of the transform matrix.
+         * @type {WebGLUniformLocation}
+         */
+        this.transformLocation = gl.getUniformLocation(renderProgram, "transform");
     }
 
     /**
@@ -84,6 +95,8 @@ class Scene extends RenderLayer {
         // Reset the translation matrix and apply the camera matrix.
         mat4.identity(this.totalTrans);
         mat4.mul(this.totalTrans, this.camera.matrix, this.totalTrans);
+        // Use the default render program
+        gl.useProgram(this.renderProgram);
         // Then render all of the nodes
         this.renderNode(now, this.root);
     }
@@ -106,6 +119,7 @@ class Scene extends RenderLayer {
     renderNode(now, node) {
         // Apply this node's transformation matrix
         mat4.mul(this.totalTrans, node.transform.matrix, this.totalTrans);
+        gl.uniformMatrix4fv(this.transformLocation, false, this.totalTrans);
         // Render the node and its children
         node.render(now, this.totalTrans);
         node.children.forEach(child => this.render(now, child));
