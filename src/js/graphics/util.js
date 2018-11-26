@@ -4,6 +4,9 @@
 // graphics/util.js -- GL utilities
 //
 
+/**
+ * @type {WebGLRenderingContext}
+ */
 var gl = null;
 
 /**
