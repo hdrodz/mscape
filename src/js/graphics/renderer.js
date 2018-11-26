@@ -107,6 +107,12 @@ class Renderer {
          * @type {WebGLBuffer}
          */
         this.planeBuff = null;
+        /**
+         * Background color of the renderer.
+         */
+        this.clearColor = {
+            r: 100 / 255, g: 149 / 255, b: 237 / 255, a: 255 / 255
+        };
 
         this.setupFramebuffers();
 
@@ -226,7 +232,6 @@ class Renderer {
         // Don't render until we're ready
         if (!this.ready)
             return;
-        gl.clear(gl.COLOR_BUFFER_BIT);
         // Render all of the layers
         gl.viewport(0, 0, this.renderWidth, this.renderHeight);
         for (var i = 0; i < this.layers.length; ++i) {
@@ -254,6 +259,10 @@ class Renderer {
         // Draw to the screen, not to the last framebuffer
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.useProgram(this.composeProgram);
+        // Clear the screen
+        gl.clearColor(this.clearColor.r, this.clearColor.g, 
+            this.clearColor.b, this.clearColor.a);
+        gl.clear(gl.COLOR_BUFFER_BIT);
         // Bind the textures
         this.buffers.forEach((buf, i) => {
             gl.activeTexture(gl.TEXUTRE0 + i);
