@@ -162,7 +162,7 @@ class Renderer {
     transferPlanePreRender() {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.planeBuff);
         const attPosition = gl.getAttribLocation(this.composeProgram, "position");
-        gl.vertexAttribPointer(attPosition, 3, gl.FLOAT, false, 0, 0);
+        gl.vertexAttribPointer(attPosition, 2, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(attPosition);
     }
 
@@ -266,7 +266,7 @@ class Renderer {
         gl.clear(gl.COLOR_BUFFER_BIT);
         // Bind the textures
         this.buffers.forEach((buf, i) => {
-            gl.activeTexture(gl.TEXUTRE0 + i);
+            gl.activeTexture(gl.TEXTURE0 + i);
             gl.bindTexture(gl.TEXTURE_2D, buf.texture);
             gl.uniform1i(this.layerUniforms[i], i);
         });
