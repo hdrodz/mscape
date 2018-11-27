@@ -134,7 +134,8 @@ class Renderer {
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
             // Set up the framebuffer
             gl.bindFramebuffer(gl.FRAMEBUFFER, this.buffers[i].framebuffer);
-            gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, 0);
+            gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
+                gl.TEXTURE_2D, this.buffers[i].texture, 0);
         }
     }
 
