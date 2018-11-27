@@ -4,6 +4,11 @@
 // main.js -- Application entry point
 //
 
+/**
+ * @type {Renderer}
+ */
+var renderer = undefined;
+
 window.onload = () => {
     const canvas = document.getElementById("canvas");
     tryInitWebGL(canvas);
@@ -14,9 +19,14 @@ window.onload = () => {
         gl.clear(gl.COLOR_BUFFER_BIT);
     };
 
-    const renderer = new Renderer(1920, 1080, 
+    renderer = new Renderer(1920, 1080, 
         canvas.clientWidth, canvas.clientHeight,
         [testLayer], [BlendMode.NORMAL]);
     
-    requestAnimationFrame(now => renderer.render(now));
+    render(0);
+}
+
+function render(now) {
+    renderer.render(now);
+    requestAnimationFrame(render);
 }

@@ -45,18 +45,18 @@ var id_fs;
 
 /**
  * Tries to compile a shader. Throws an exception on failure.
- * @param {GLEnum} type Type of the shader to compile. Can be either
+ * @param {GLenum} type Type of the shader to compile. Can be either
  *                      gl.VERTEX_SHADER or gl.FRAGMENT_SHADER.
  * @param {String} text Source code of the shader to compile.
  */
 function tryCompileShader(type, text) {
     requireGLContext();
 
-    out = gl.createShader(gl.VERTEX_SHADER);
+    const out = gl.createShader(type);
     gl.shaderSource(out, text);
     gl.compileShader(out);
-    if (!gl.getShaderParameter(out, gl.SHADER_STATUS)) {
-        throw `Failed to compile shader: ${gl.getShaderInfoLog(out)}`;
+    if (!gl.getShaderParameter(out, gl.COMPILE_STATUS)) {
+        throw `Failed to compile shader: ${gl.getShaderInfoLog(out)}\n\nShader source:\n\n ${text}`;
     }
     return out;
 }

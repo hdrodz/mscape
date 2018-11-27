@@ -19,16 +19,16 @@ const BlendMode = Object.freeze({
         value: 1,
         code:
         // Source: https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending 
-        `output.a = next.a + cur.a * (1. - next.a);
-        output.rgb = (next.rgb * next.a + cur.rgb * output.a) / output.a;`
+        `ret.a = next.a + cur.a * (1. - next.a);
+        ret.rgb = (next.rgb * next.a + cur.rgb * ret.a) / ret.a;`
     },
     ADD: {
         value: 2,
-        code: `output = cur + next;`
+        code: `ret = cur + next;`
     },
     MULTIPLY: {
         value: 3,
-        code: `output = cur * next;`
+        code: `ret = cur * next;`
     }
 });
 
@@ -117,7 +117,7 @@ class Renderer {
         this.setupFramebuffers();
 
         loadFileTextAsync("shaders/compose.frag.template")
-            .then(this.finalizeInitialization, alertOnReject);
+            .then(this.finalizeInitialization.bind(this), alertOnReject);
     }
 
     /**
@@ -144,12 +144,12 @@ class Renderer {
      * render onto.
      */
     setupTransferPlane() {
-        const plane = new Float32Array(
+        const plane = new Float32Array([
             -1, -1,
             1, -1,
             -1, 1,
             1, 1
-        );
+        ]);
 
         this.planeBuff = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.planeBuff);
@@ -204,9 +204,9 @@ class Renderer {
             (_, i) => `uniform sampler2D input${i};`
         ).join('\n');
         const compositionStatements = this.blendModes.map(
-            (mode, i) => `next = texture(input${i}, position_norm);
+            (mode, i) => `next = texture2D(input${i}, position_norm);
             ${mode.code}
-            cur = output;`
+            cur = ret;`
         ).join('\n');
 
         const shaderText = template
@@ -220,7 +220,7 @@ class Renderer {
         gl.attachShader(this.composeProgram, id_vs);
         gl.attachShader(this.composeProgram, composeFs);
         gl.linkProgram(this.composeProgram);
-        if (!gl.getProgramParameter(this.prog, gl.LINK_STATUS)) {
+        if (!gl.getProgramParameter(this.composeProgram, gl.LINK_STATUS)) {
             throw gl.getProgramInfoLog(this.prog);
         }
     }
@@ -268,7 +268,7 @@ class Renderer {
         this.buffers.forEach((buf, i) => {
             gl.activeTexture(gl.TEXUTRE0 + i);
             gl.bindTexture(gl.TEXTURE_2D, buf.texture);
-            gl.uniform1i(this.layerUniforms, i);
+            gl.uniform1i(this.layerUniforms[i], i);
         });
         // Render the plane on-screen
         this.transferPlanePreRender();
