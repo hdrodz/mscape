@@ -14,9 +14,9 @@ window.onload = () => {
         gl.clear(gl.COLOR_BUFFER_BIT);
     };
 
-    const renderer = new Renderer(19280, 1080, 
+    const renderer = new Renderer(1920, 1080, 
         canvas.clientWidth, canvas.clientHeight,
         [testLayer], [BlendMode.NORMAL]);
     
-    requestAnimationFrame(renderer.render);
+    requestAnimationFrame(now => renderer.render(now));
 }
