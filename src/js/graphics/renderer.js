@@ -19,16 +19,16 @@ const BlendMode = Object.freeze({
         value: 1,
         code:
         // Source: https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending 
-        `output.a = next.a + cur.a * (1. - next.a);
-        output.rgb = (next.rgb * next.a + cur.rgb * output.a) / output.a;`
+        `ret.a = next.a + cur.a * (1. - next.a);
+        ret.rgb = (next.rgb * next.a + cur.rgb * ret.a) / ret.a;`
     },
     ADD: {
         value: 2,
-        code: `output = cur + next;`
+        code: `ret = cur + next;`
     },
     MULTIPLY: {
         value: 3,
-        code: `output = cur * next;`
+        code: `ret = cur * next;`
     }
 });
 
@@ -73,7 +73,12 @@ class Renderer {
              * Frame buffer.
              * @type {WebGLFramebuffer}
              */
-            framebuffer: gl.createFramebuffer()
+            framebuffer: gl.createFramebuffer(),
+            /**
+             * Depth buffer.
+             * @type {WebGLRenderbuffer}
+             */
+            depthbuffer: gl.createRenderbuffer()
         }));
         /**
          * How to blend each layer with its previous layer.
@@ -107,11 +112,17 @@ class Renderer {
          * @type {WebGLBuffer}
          */
         this.planeBuff = null;
+        /**
+         * Background color of the renderer.
+         */
+        this.clearColor = {
+            r: 100 / 255, g: 149 / 255, b: 237 / 255, a: 255 / 255
+        };
 
         this.setupFramebuffers();
 
         loadFileTextAsync("shaders/compose.frag.template")
-            .then(this.finalizeInitialization, alertOnReject);
+            .then(this.finalizeInitialization.bind(this), alertOnReject);
     }
 
     /**
@@ -124,11 +135,22 @@ class Renderer {
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.renderWidth,
                 this.renderHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-            // Set up the framebuffer
+            // Attach the framebuffer texture
             gl.bindFramebuffer(gl.FRAMEBUFFER, this.buffers[i].framebuffer);
-            gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, 0);
+            gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
+                gl.TEXTURE_2D, this.buffers[i].texture, 0);
+            // Attach the framebuffer depth buffer
+            gl.bindRenderbuffer(gl.RENDERBUFFER, this.buffers[i].depthbuffer);
+            gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, 
+                this.renderWidth, this.renderHeight);
+            gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT,
+                gl.RENDERBUFFER, this.buffers[i].depthbuffer);
+            
+            if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE)
+                throw `Framebuffer ${i} is incomplete: ${glStatusString(gl.checkFramebufferStatus(gl.FRAMEBUFFER))}`;
         }
     }
 
@@ -137,12 +159,12 @@ class Renderer {
      * render onto.
      */
     setupTransferPlane() {
-        const plane = new Float32Array(
+        const plane = new Float32Array([
             -1, -1,
             1, -1,
             -1, 1,
             1, 1
-        );
+        ]);
 
         this.planeBuff = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.planeBuff);
@@ -155,7 +177,7 @@ class Renderer {
     transferPlanePreRender() {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.planeBuff);
         const attPosition = gl.getAttribLocation(this.composeProgram, "position");
-        gl.vertexAttribPointer(attPosition, 3, gl.FLOAT, false, 0, 0);
+        gl.vertexAttribPointer(attPosition, 2, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(attPosition);
     }
 
@@ -197,9 +219,9 @@ class Renderer {
             (_, i) => `uniform sampler2D input${i};`
         ).join('\n');
         const compositionStatements = this.blendModes.map(
-            (mode, i) => `next = texture(input${i}, position_norm);
+            (mode, i) => `next = texture2D(input${i}, position_norm);
             ${mode.code}
-            cur = output;`
+            cur = ret;`
         ).join('\n');
 
         const shaderText = template
@@ -213,7 +235,7 @@ class Renderer {
         gl.attachShader(this.composeProgram, id_vs);
         gl.attachShader(this.composeProgram, composeFs);
         gl.linkProgram(this.composeProgram);
-        if (!gl.getProgramParameter(this.prog, gl.LINK_STATUS)) {
+        if (!gl.getProgramParameter(this.composeProgram, gl.LINK_STATUS)) {
             throw gl.getProgramInfoLog(this.prog);
         }
     }
@@ -226,14 +248,11 @@ class Renderer {
         // Don't render until we're ready
         if (!this.ready)
             return;
-        gl.clear(gl.COLOR_BUFFER_BIT);
         // Render all of the layers
-        gl.viewport(0, 0, this.renderWidth, this.renderHeight);
         for (var i = 0; i < this.layers.length; ++i) {
             this.renderLayer(now, i);
         }
         // Compose the layers
-        gl.viewport(0, 0, this.width, this.height);
         this.compose();
     }
 
@@ -243,7 +262,10 @@ class Renderer {
      * @param {Number} index Index of the render layer to render.
      */
     renderLayer(now, index) {
+        // Make sure we use texture unit 0 before rendering
+        gl.activeTexture(gl.TEXTURE0);
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.buffers[index].framebuffer);
+        gl.viewport(0, 0, this.renderWidth, this.renderHeight);
         this.layers[index].render(now);
     }
 
@@ -254,11 +276,16 @@ class Renderer {
         // Draw to the screen, not to the last framebuffer
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.useProgram(this.composeProgram);
+        // Clear the screen
+        gl.clearColor(this.clearColor.r, this.clearColor.g, 
+            this.clearColor.b, this.clearColor.a);
+        gl.viewport(0, 0, this.width, this.height);
+        gl.clear(gl.COLOR_BUFFER_BIT);
         // Bind the textures
         this.buffers.forEach((buf, i) => {
-            gl.activeTexture(gl.TEXUTRE0);
+            gl.activeTexture(gl.TEXTURE0 + i);
             gl.bindTexture(gl.TEXTURE_2D, buf.texture);
-            gl.uniform1i(this.layerUniforms, i);
+            gl.uniform1i(this.layerUniforms[i], i);
         });
         // Render the plane on-screen
         this.transferPlanePreRender();

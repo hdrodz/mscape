@@ -15,12 +15,22 @@
     <!--JavaScript source files-->
     <script type="text/javascript" src="js/util.js"></script>
     <script type="text/javascript" src="js/audio.js"></script>
+
+    <script type="text/javascript" src="js/graphics/util.js"></script>
+    <script type="text/javascript" src="js/graphics/transform.js"></script>
+    <script type="text/javascript" src="js/graphics/shader.js"></script>
+    <script type="text/javascript" src="js/graphics/renderer.js"></script>
+    <script type="text/javascript" src="js/graphics/camera.js"></script>
+    <script type="text/javascript" src="js/graphics/scene.js"></script>
+    <script type="text/javascript" src="js/graphics/mesh.js"></script>
+
+    <script type="text/javascript" src="js/main.js"></script>
 </head>
 <body>
     <audio id="player" controls>
         Bummer&hellip; 😐 Your browser doesn't support the audio element. 
     </audio>
-    <input type="file">
+    <input type="file" onchange="load_audio(this.files[0])">
 
     <canvas id="canvas">
         Bummer&hellip; 😐 Your browser doesn't support the canvas element.

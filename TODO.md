@@ -18,9 +18,9 @@
         - [x] Graph data structure
         - [x] Transformation data structure
         - [x] Scene object interface
-        - [ ] Camera object
-        - [ ] Scene object types
-            - [ ] Meshes
+        - [x] Camera object
+        - [-] Scene object types
+            - [x] Meshes
             - [ ] Lights
 - [ ] Debug
 
