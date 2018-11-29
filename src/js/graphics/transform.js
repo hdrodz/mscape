@@ -118,8 +118,8 @@ class Transform {
      */
     refreshMatrices() {
         mat4.fromRotationTranslationScale(this._mat, this.rotate,
-            this.tranlsate, this.scale);
-        mat4.inv(this._inv, this._mat);
+            this.translate, this.scale);
+        mat4.invert(this._inv, this._mat);
         this.dirty = false;
     }
 

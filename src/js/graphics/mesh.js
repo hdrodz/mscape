@@ -18,7 +18,7 @@ function fallbackTexture() {
         FALLBACK_TEXTURE = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, FALLBACK_TEXTURE);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 2, 2, 0, gl.RGBA, gl.UNSIGNED_BYTE,
-            new Float32Array([
+            new Uint8Array([
                 255, 0, 255, 255,
                 0, 0, 0, 255,
                 0, 0, 0, 255,
@@ -130,8 +130,6 @@ class MeshObject extends SceneObject {
         // Assign uniform values
         gl.uniformMatrix4fv(this.uTrans, false, totalTrans);
         gl.uniform1i(this.uTexture, 0);
-        // Whether to render a texture or not
-        gl.uniform1i(uTextured, this.texture ? 1 : 0);
 
         // Setup the texture, using a fallback texture if none is assigned.
         gl.activeTexture(gl.TEXTURE0);
@@ -140,6 +138,6 @@ class MeshObject extends SceneObject {
         // Render the mesh.
         this.setupAttribs();
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.mesh.indexBuffer);
-        gl.drawElements(this.displayFunc, model.mesh.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(this.displayFunc, this.mesh.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
     }
 }

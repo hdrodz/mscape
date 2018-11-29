@@ -78,7 +78,7 @@ function compileAndRegister(program, vs, fs, id) {
     gl.attachShader(program, vs);
     gl.attachShader(program, fs);
     gl.linkProgram(program);
-    if (!gl.getProgramParameter(this.prog, gl.LINK_STATUS)) {
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
         throw `Failed to link GLSL program: ${gl.getProgramInfoLog(this.prog)}`;
     }
 

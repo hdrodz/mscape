@@ -56,6 +56,7 @@ class Scene extends RenderLayer {
      * @param {WebGLProgram} renderProgram Program to use for rendering.
      */
     constructor(camera, renderProgram) {
+        super();
         /**
          * The root of the scene. Has no transformation and serves only to hold
          * children.
@@ -89,12 +90,15 @@ class Scene extends RenderLayer {
      * @param {Number} now Application time, in seconds.
      */
     render(now) {
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         // First update all of the nodes
         this.update(now, this.root);
         
         // Reset the translation matrix and apply the camera matrix.
         mat4.identity(this.totalTrans);
-        mat4.mul(this.totalTrans, this.camera.matrix, this.totalTrans);
+        mat4.mul(this.totalTrans, this.camera.proj, this.totalTrans);
+        mat4.mul(this.totalTrans, this.camera.world.matrix, this.totalTrans);
         // Use the default render program
         gl.useProgram(this.renderProgram);
         // Then render all of the nodes
@@ -108,7 +112,8 @@ class Scene extends RenderLayer {
      */
     update(now, node) {
         node.update(now);
-        node.children.forEach(child => this.update(now, child));
+        const self = this;
+        node.children.forEach(child => self.update(now, child));
     }
 
     /**
@@ -119,10 +124,10 @@ class Scene extends RenderLayer {
     renderNode(now, node) {
         // Apply this node's transformation matrix
         mat4.mul(this.totalTrans, node.transform.matrix, this.totalTrans);
-        gl.uniformMatrix4fv(this.transformLocation, false, this.totalTrans);
         // Render the node and its children
         node.render(now, this.totalTrans);
-        node.children.forEach(child => this.render(now, child));
+        const self = this;
+        node.children.forEach(child => self.renderNode(now, child));
         // De-apply this node's transformation matrix
         mat4.mul(this.totalTrans, node.transform.inverseMatrix, this.totalTrans);
     }
