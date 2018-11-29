@@ -26,3 +26,22 @@ function tryInitWebGL(canvas) {
     if (!gl)
         throw "Failed to create WebGL context";
 }
+
+/**
+ * 
+ * @param {GLenum} status Status to convert to string.
+ */
+function glStatusString(status) {
+    switch (status) {
+    case gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+        return "The framebuffer has an incomplete attachment.";
+    case gl.FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
+        return "Not all dimensions have the same width and height.";
+    case gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+        return "The framebuffer has no image attached.";
+    case gl.FRAMEBUFFER_UNSUPPORTED:
+        return "Some parameters passed to the framebuffer are unsupported for this platform.";
+    default:
+        return "Unknown error.";
+    }
+}

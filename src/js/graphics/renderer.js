@@ -73,7 +73,12 @@ class Renderer {
              * Frame buffer.
              * @type {WebGLFramebuffer}
              */
-            framebuffer: gl.createFramebuffer()
+            framebuffer: gl.createFramebuffer(),
+            /**
+             * Depth buffer.
+             * @type {WebGLRenderbuffer}
+             */
+            depthbuffer: gl.createRenderbuffer()
         }));
         /**
          * How to blend each layer with its previous layer.
@@ -130,12 +135,22 @@ class Renderer {
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.renderWidth,
                 this.renderHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-            // Set up the framebuffer
+            // Attach the framebuffer texture
             gl.bindFramebuffer(gl.FRAMEBUFFER, this.buffers[i].framebuffer);
             gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
                 gl.TEXTURE_2D, this.buffers[i].texture, 0);
+            // Attach the framebuffer depth buffer
+            gl.bindRenderbuffer(gl.RENDERBUFFER, this.buffers[i].depthbuffer);
+            gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, 
+                this.renderWidth, this.renderHeight);
+            gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT,
+                gl.RENDERBUFFER, this.buffers[i].depthbuffer);
+            
+            if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE)
+                throw `Framebuffer ${i} is incomplete: ${glStatusString(gl.checkFramebufferStatus(gl.FRAMEBUFFER))}`;
         }
     }
 
@@ -234,12 +249,10 @@ class Renderer {
         if (!this.ready)
             return;
         // Render all of the layers
-        gl.viewport(0, 0, this.renderWidth, this.renderHeight);
         for (var i = 0; i < this.layers.length; ++i) {
             this.renderLayer(now, i);
         }
         // Compose the layers
-        gl.viewport(0, 0, this.width, this.height);
         this.compose();
     }
 
@@ -249,7 +262,10 @@ class Renderer {
      * @param {Number} index Index of the render layer to render.
      */
     renderLayer(now, index) {
+        // Make sure we use texture unit 0 before rendering
+        gl.activeTexture(gl.TEXTURE0);
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.buffers[index].framebuffer);
+        gl.viewport(0, 0, this.renderWidth, this.renderHeight);
         this.layers[index].render(now);
     }
 
@@ -263,6 +279,7 @@ class Renderer {
         // Clear the screen
         gl.clearColor(this.clearColor.r, this.clearColor.g, 
             this.clearColor.b, this.clearColor.a);
+        gl.viewport(0, 0, this.width, this.height);
         gl.clear(gl.COLOR_BUFFER_BIT);
         // Bind the textures
         this.buffers.forEach((buf, i) => {
