@@ -30,7 +30,7 @@
     <audio id="player" controls>
         Bummer&hellip; 😐 Your browser doesn't support the audio element. 
     </audio>
-    <input type="file">
+    <input type="file" onchange="load_audio(this.files[0])">
 
     <canvas id="canvas">
         Bummer&hellip; 😐 Your browser doesn't support the canvas element.
