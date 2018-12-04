@@ -98,7 +98,7 @@ class Scene extends RenderLayer {
         // Reset the translation matrix and apply the camera matrix.
         mat4.identity(this.totalTrans);
         mat4.mul(this.totalTrans, this.camera.proj, this.totalTrans);
-        mat4.mul(this.totalTrans, this.camera.world.matrix, this.totalTrans);
+        mat4.mul(this.totalTrans, this.totalTrans, this.camera.world.inverseMatrix);
         // Use the default render program
         gl.useProgram(this.renderProgram);
         // Then render all of the nodes
@@ -123,12 +123,12 @@ class Scene extends RenderLayer {
      */
     renderNode(now, node) {
         // Apply this node's transformation matrix
-        mat4.mul(this.totalTrans, node.transform.matrix, this.totalTrans);
+        mat4.mul(this.totalTrans, this.totalTrans, node.transform.matrix);
         // Render the node and its children
         node.render(now, this.totalTrans);
         const self = this;
         node.children.forEach(child => self.renderNode(now, child));
         // De-apply this node's transformation matrix
-        mat4.mul(this.totalTrans, node.transform.inverseMatrix, this.totalTrans);
+        mat4.mul(this.totalTrans, this.totalTrans, node.transform.inverseMatrix);
     }
 }
