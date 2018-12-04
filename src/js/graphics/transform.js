@@ -84,7 +84,7 @@ class Transform {
      * @returns {Transform} this, to allow for operation chaining.
      */
     rotateBy(q) {
-        quat.mul(this.rotate, this.rotate, q);
+        quat.mul(this.rotate, q, this.rotate);
         this.dirty = true;
         return this;
     }
