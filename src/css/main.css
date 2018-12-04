@@ -4,6 +4,23 @@ html, body {
     margin: 0px;
 }
 
+.overlay {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+}
+
+.status {
+    font-family: monospace;
+    color: #DDDDDD;
+}
+
+.centered {
+    text-align: center;
+}
+
 /* Canvas fills the screen */
 canvas {
     width: 100vw;
