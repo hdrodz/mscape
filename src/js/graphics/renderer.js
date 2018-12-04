@@ -273,6 +273,8 @@ class Renderer {
      * Compose all of the layers onto the screen.
      */
     compose() {
+        // Disable culling when rendering the final composition
+        gl.disable(gl.CULL_FACE);
         // Draw to the screen, not to the last framebuffer
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.useProgram(this.composeProgram);
@@ -290,5 +292,6 @@ class Renderer {
         // Render the plane on-screen
         this.transferPlanePreRender();
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        gl.enable(gl.CULL_FACE);
     }
 }

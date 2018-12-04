@@ -25,6 +25,9 @@ function tryInitWebGL(canvas) {
     gl = canvas.getContext("webgl");
     if (!gl)
         throw "Failed to create WebGL context";
+    
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
 }
 
 /**
