@@ -4,6 +4,21 @@
 // main.js -- Application entry point
 //
 
+const radians = deg => deg * Math.PI / 180;
+const degrees = rad => rad * 180 / Math.PI;
+
+/**
+ * Speed of the wheels, in degrees per second
+ */
+const WHEEL_SPEED = 10;
+
+const WHEEL_DELTA_QUAT = quat.fromEuler(quat.create(), WHEEL_SPEED, 0, 0);
+
+/**
+ * Time of the last frame
+ */
+var then = 0;
+
 /**
  * @type {Renderer}
  */
@@ -16,6 +31,11 @@ var audioSesh = undefined;
 
 const buff = new Uint8Array(8192);
 
+/**
+ * @type {Camera}
+ */
+var camera = undefined;
+
 window.onload = () => {
     const player = document.getElementById("player");
     audioSesh = new WebAudioSession(player, 8192);
@@ -25,130 +45,21 @@ window.onload = () => {
     canvas.height = canvas.clientHeight;
     tryInitWebGL(canvas);
 
-    const fetchCar = loadFileTextAsync("assets/chipichapi/chipichapi.obj");
+    const fetchCar = loadFileTextAsync("assets/zoomscape/zoomscape.obj");
+    const fetchWheel = loadFileTextAsync("assets/zoomscape/wheel.obj");
     const fetchVS = loadFileTextAsync("shaders/default3d.vert");
     const fetchFS = loadFileTextAsync("shaders/dumbshader.frag");
     const fetchLine = loadFileTextAsync("shaders/line.frag");
 
-    Promise.all([fetchCar, fetchVS, fetchFS, fetchLine])
+    Promise.all([fetchCar, fetchWheel, fetchVS, fetchFS, fetchLine])
         .then(values => {
-            const obj = values[0];
-            const vs = values[1];
-            const fs = values[2];
-            const line = values[3];
-            initScene(canvas, obj, vs, fs, line);
+            const car = values[0];
+            const wheel = values[1];
+            const vs = values[2];
+            const fs = values[3];
+            const line = values[4];
+            initScene(canvas, car, wheel, vs, fs, line);
         });
-
-    /*
-    const layer1 = new RenderLayer();
-    layer1.render = (now) => {
-        gl.clearColor(0, 0.4, 0, 1);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-    }
-    const layer2 = new RenderLayer();
-    layer2.render = (now) => {
-        gl.clearColor(0, 0, 0.5, 1);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-    }
-    const layer3 = new RenderLayer();
-    layer3.render = now => {
-        gl.clearColor(1, 0, 0, 1);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-    }
-    renderer = new Renderer(1920, 1080,
-            canvas.clientWidth, canvas.clientHeight,
-            [layer1, layer2, layer3], [BlendMode.ADD, BlendMode.ADD, BlendMode.ADD]
-        );
-    render(0);
-    */
-
-    /*
-    loadFileTextAsync("shaders/line.frag")
-        .then(text => {
-            const points2 = new Float32Array([
-                -1, -1,
-                -1, 0,
-                0, -1,
-                -1, 0,
-                0, -1,
-                0, 0,
-
-                0, 0,
-                0, 1,
-                1, 0,
-                0, 1,
-                1, 0,
-                1, 1,
-            ]);
-            const vbo2 = gl.createBuffer();
-            gl.bindBuffer(gl.ARRAY_BUFFER, vbo2);
-            gl.bufferData(gl.ARRAY_BUFFER, points2, gl.STATIC_DRAW);
-
-            const otherVS = `
-            attribute vec2 p;
-            uniform mat4 t;
-            uniform float time;
-            varying vec2 pos;
-            void main() {
-                gl_Position = t * vec4(p, 0., 1.);
-                pos = (gl_Position.xy + vec2(1., 1.)) / 2.;
-            }
-            `;
-            const otherFS = `
-            precision mediump float;
-            varying vec2 pos;
-            void main() {
-                gl_FragColor = vec4(pos.x, 0., pos.y, 1.);
-            }
-            `;
-            const ovs = tryCompileShader(gl.VERTEX_SHADER, otherVS);
-            const ofs = tryCompileShader(gl.FRAGMENT_SHADER, otherFS);
-            const prog2 = gl.createProgram();
-            gl.attachShader(prog2, ovs);
-            gl.attachShader(prog2, ofs);
-            gl.linkProgram(prog2);
-
-            const m = mat4.create();
-            mat4.set(m,
-                1, 0, 0, 0,
-                0, 1, 0, 0,
-                0, 0, 1, 0,
-                0.25e-20, 0.25e-20, 0.25e-20, 1);
-
-            const layer2 = new RenderLayer();
-            layer2.render = (now) => {
-                gl.clearColor(0, 0, 0, 0);
-                gl.clear(gl.COLOR_BUFFER_BIT);
-                
-                gl.useProgram(prog2);
-                
-                const u = gl.getUniformLocation(prog2, "t");
-                gl.uniformMatrix4fv(u, false, m);
-                //gl.uniform1f(gl.getUniformLocation(prog2, "time"), now / 1000);
-
-                gl.bindBuffer(gl.ARRAY_BUFFER, vbo2);
-                
-                const att = gl.getAttribLocation(prog2, "p");
-                gl.vertexAttribPointer(att, 2, gl.FLOAT, false, 0, 0);
-                gl.enableVertexAttribArray(att);
-
-                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 12);
-            };
-
-            renderer = new Renderer(1920, 1080,
-                canvas.clientWidth, canvas.clientHeight,
-                [layer, layer2], [BlendMode.NORMAL, BlendMode.NORMAL]
-            );
-
-            window.onresize = () => {
-                canvas.width = canvas.clientWidth;
-                canvas.height = canvas.clientHeight;
-                renderer.resize(canvas.clientWidth, canvas.clientHeight);
-            }
-
-            render(0);
-        });
-        */
 }
 
 function initBackground(text) {
@@ -165,7 +76,9 @@ function initBackground(text) {
 
     const planePoints = new Float32Array([
         -1, -1,
+        1, 1,
         -1, 1,
+        -1, -1,
         1, -1,
         1, 1
     ]);
@@ -184,7 +97,7 @@ function initBackground(text) {
     const layer = new RenderLayer();
     layer.render = (now) => {
         gl.clearColor(0, 0, 0, 1);
-        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         gl.useProgram(prog);
 
@@ -206,44 +119,74 @@ function initBackground(text) {
         gl.vertexAttribPointer(att, 2, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(att);
 
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
     };
     return layer;
 }
 
 var scene;
 
-function initScene(canvas, obj, vs_text, fs_text, line_text) {
+function initCar(carObj, wheelObj) {
+    const wheelMesh = new OBJ.Mesh(wheelObj);
+    const wheels = [
+        new MeshObject("fl", wheelMesh),
+        new MeshObject("fr", wheelMesh),
+        new MeshObject("rl", wheelMesh),
+        new MeshObject("rr", wheelMesh)
+    ];
+    const q = quat.fromEuler(quat.create(), 0, 90, 0);
+    // Assign each update function
+    wheels.forEach(w => {
+        console.debug(w);
+        w.transform.rotateAbs(q);
+        w.update = now => {
+            w.transform.rotateBy(WHEEL_DELTA_QUAT);
+        }
+    });
+
+    // Setup the wheels' relative positions
+    const v = vec3.create();
+    vec3.set(v, 2 + 1.5 / 2, 0.5, -4.5);
+    wheels[0].transform.translateAbs(v);
+    vec3.set(v, -(2 + 1.5 / 2), 0.5, -4.5);
+    wheels[1].transform.translateAbs(v);
+    vec3.set(v, 2 + 1.5 / 2, 0.5, 4);
+    wheels[2].transform.translateAbs(v);
+    vec4.set(v, -(2 + 1.5 / 2), 0.5, 4);
+    wheels[3].transform.translateAbs(v);
+
+    const carMesh = new OBJ.Mesh(carObj);
+    const car = new MeshObject("car", carMesh);
+    car.children.push(...wheels);
+
+    return car;
+}
+
+function initScene(canvas, car, wheel, vs_text, fs_text, line_text) {
     const bg = initBackground(line_text);
     const prog = gl.createProgram();
     const vs = tryCompileShader(gl.VERTEX_SHADER, vs_text);
     const fs = tryCompileShader(gl.FRAGMENT_SHADER, fs_text);
     compileAndRegister(prog, vs, fs, "meshDefault");
 
-    const m = new OBJ.Mesh(obj);
-    const mo = new MeshObject("car", m);
+    const co = initCar(car, wheel);
 
-    /*
-    const camera = new PerspectiveCamera(
-        45 * Math.PI / 180, 1920 / 1080,
-        0.1, 1000
-    );*/
-
-    const camera = new OrthogonalCamera(
-        -20, 20, 
-        -20, 20, 
-        0, 20
+    camera = new PerspectiveCamera(
+        radians(49.1), 1920 / 1080,
+        0.1, 100
     );
+    camera.world.translateAbs([0, 5, -25])
+        .rotateAbs(quat.fromEuler(quat.create(), 0, 180, 0));
 
     const r = quat.create();
-    mo.update = (now) => {
-        quat.fromEuler(r, now / 1000 * 50, 0, 0);
-        camera.world.rotateAbs(r);
+    co.update = (now) => {
+        //quat.fromEuler(r, now / 1000 * 50, 0, 0);
+        //camera.world.rotateAbs(r);
     }
 
     scene = new Scene(camera, prog);
 
-    scene.root.children.push(mo);
+    scene.root.children.push(co);
 
     renderer = new Renderer(1920, 1080,
         canvas.width, canvas.height,
@@ -268,4 +211,53 @@ function load_audio(file) {
     let srcurl = window.URL.createObjectURL(file);
     player.src = srcurl;
     player.load();
+}
+
+window.onkeydown = on_key;
+
+const v = vec3.create();
+const q = quat.create();
+function on_key(e) {
+    const STEP = 0.1;
+    const RSTEP = 1;
+    vec3.set(v, 0, 0, 0);
+    quat.identity(q);
+    switch (e.key) {
+    case "X":
+        vec3.set(v, -STEP, 0, 0);
+        break;
+    case "x":
+        vec3.set(v, STEP, 0, 0);
+        break;
+    case "Y":
+        vec3.set(v, 0, -STEP, 0);
+        break;
+    case "y":
+        vec3.set(v, 0, STEP, 0);
+        break;
+    case "Z":
+        vec3.set(v, 0, 0, -STEP);
+        break;
+    case "z":
+        vec3.set(v, 0, 0, STEP);
+        break;
+
+    case "ArrowRight":
+        quat.fromEuler(q, 0, RSTEP, 0, 0);
+        break;
+    case "ArrowLeft":
+        quat.fromEuler(q, 0, -RSTEP, 0, 0);
+        break;
+    case "ArrowUp":
+        quat.fromEuler(q, RSTEP, 0, 0);
+        break;
+    case "ArrowDown":
+        quat.fromEuler(q, -RSTEP, 0, 0);
+        break;
+    }
+    camera.world.translateBy(v).rotateBy(q);
+    const p = camera.world.translate;
+    const r = camera.world.rotate;
+    document.getElementById("position").innerText = `(${p[0]}, ${p[1]}, ${p[2]})`;
+    document.getElementById("rotation").innerText = `${r[0]} + ${r[1]}i + ${r[2]}j + ${r[3]}k`;
 }
