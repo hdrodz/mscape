@@ -20,7 +20,7 @@ const BlendMode = Object.freeze({
         code:
         // Source: https://en.wikipedia.org/wiki/Alpha_compositing#Alpha_blending 
         `ret.a = next.a + cur.a * (1. - next.a);
-        ret.rgb = (next.rgb * next.a + cur.rgb * ret.a) / ret.a;`
+        ret.rgb = (next.rgb * next.a + cur.rgb * cur.a * (1. - next.a)) / ret.a;`
     },
     ADD: {
         value: 2,
