@@ -24,7 +24,8 @@ function fallbackTexture() {
                 0, 0, 0, 255,
                 255, 0, 255, 255
             ]));
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
     }
@@ -89,7 +90,7 @@ class MeshObject extends SceneObject {
 
         this.attrVert = gl.getAttribLocation(this.shaderProg, "vertex");
         this.attrNorm = gl.getAttribLocation(this.shaderProg, "normal");
-        if (this.mesh.vertexBuffer) {
+        if (this.mesh.textureBuffer) {
             this.attrTexC = gl.getAttribLocation(this.shaderProg, "texcoord");
         } else {
             this.attrTexC = undefined;
