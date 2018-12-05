@@ -36,6 +36,12 @@ const buff = new Uint8Array(8192);
  */
 var camera = undefined;
 
+function loadAll(files) {
+    return Promise.all(files.map(
+        file => file.blob ? loadFileBlobAsync(file.path) : loadFileTextAsync(file.path)
+    ));
+}
+
 window.onload = () => {
     const player = document.getElementById("player");
     audioSesh = new WebAudioSession(player, 8192);
@@ -45,20 +51,34 @@ window.onload = () => {
     canvas.height = canvas.clientHeight;
     tryInitWebGL(canvas);
 
-    const fetchCar = loadFileTextAsync("assets/zoomscape/zoomscape.obj");
-    const fetchWheel = loadFileTextAsync("assets/zoomscape/wheel.obj");
-    const fetchVS = loadFileTextAsync("shaders/default3d.vert");
-    const fetchFS = loadFileTextAsync("shaders/dumbshader.frag");
-    const fetchLine = loadFileTextAsync("shaders/line.frag");
-
-    Promise.all([fetchCar, fetchWheel, fetchVS, fetchFS, fetchLine])
-        .then(values => {
+    loadAll([
+        { path: "assets/zoomscape/zoomscape.obj", blob: false },
+        { path: "assets/zoomscape/wheel.obj", blob: false },
+        { path: "shaders/default3d.vert", blob: false },
+        { path: "shaders/dumbshader.frag", blob: false },
+        { path: "shaders/line.frag", blob: false },
+        { path: "shaders/grid.vert", blob: false },
+        { path: "shaders/grid.frag", blob: false }
+    ]).then(values => {
             const car = values[0];
             const wheel = values[1];
-            const vs = values[2];
-            const fs = values[3];
+            const mvst = values[2];
+            const mfst = values[3];
             const line = values[4];
-            initScene(canvas, car, wheel, vs, fs, line);
+            const gvst = values[5];
+            const gfst = values[6];
+
+            const meshProg = gl.createProgram();
+            const mvs = tryCompileShader(gl.VERTEX_SHADER, mvst);
+            const mfs = tryCompileShader(gl.FRAGMENT_SHADER, mfst);
+            compileAndRegister(meshProg, mvs, mfs, "meshDefault");
+
+            const gridProg = gl.createProgram();
+            const gvs = tryCompileShader(gl.VERTEX_SHADER, gvst);
+            const gfs = tryCompileShader(gl.FRAGMENT_SHADER, gfst);
+            compileAndRegister(gridProg, gvs, gfs, "grid");
+
+            initScene(canvas, car, wheel, line);
         });
 }
 
@@ -127,6 +147,22 @@ function initBackground(text) {
 var scene;
 
 function initCar(carObj, wheelObj) {
+    const wheelTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, wheelTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA,
+        gl.UNSIGNED_BYTE, new Uint8Array([255, 0, 0, 255]));
+    
+    const wheelImage = new Image();
+    wheelImage.onload = () => {
+        gl.bindTexture(gl.TEXTURE_2D, wheelTex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, wheelImage);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    }
+    wheelImage.src = "assets/zoomscape/wheel.png";
+
     const wheelMesh = new OBJ.Mesh(wheelObj);
     const wheels = [
         new MeshObject("fl", wheelMesh),
@@ -138,7 +174,8 @@ function initCar(carObj, wheelObj) {
     // Assign each update function
     wheels.forEach(w => {
         console.debug(w);
-        w.transform.rotateAbs(q);
+        w.texture = wheelTex;
+        w.transform.rotateAbs(q).scaleAbs([0.8, 0.8, 0.8]);
         w.update = now => {
             w.transform.rotateBy(WHEEL_DELTA_QUAT);
         }
@@ -146,29 +183,43 @@ function initCar(carObj, wheelObj) {
 
     // Setup the wheels' relative positions
     const v = vec3.create();
-    vec3.set(v, 2 + 1.5 / 2, 0.5, -4.5);
+    vec3.set(v, 2 + 1.5 / 2 - 0.2, 0.5, -4.5);
     wheels[0].transform.translateAbs(v);
-    vec3.set(v, -(2 + 1.5 / 2), 0.5, -4.5);
+    vec3.set(v, -(2 + 1.5 / 2 - 0.2), 0.5, -4.5);
     wheels[1].transform.translateAbs(v);
-    vec3.set(v, 2 + 1.5 / 2, 0.5, 4);
+    vec3.set(v, 2 + 1.5 / 2 - 0.2, 0.5, 4);
     wheels[2].transform.translateAbs(v);
-    vec4.set(v, -(2 + 1.5 / 2), 0.5, 4);
+    vec4.set(v, -(2 + 1.5 / 2 - 0.2), 0.5, 4);
     wheels[3].transform.translateAbs(v);
 
     const carMesh = new OBJ.Mesh(carObj);
     const car = new MeshObject("car", carMesh);
     car.children.push(...wheels);
 
+    const carTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, carTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA,
+        gl.UNSIGNED_BYTE, new Uint8Array([255, 0, 0, 255]));
+
+    const carImage = new Image();
+    carImage.onload = () => {
+        gl.bindTexture(gl.TEXTURE_2D, carTex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, carImage);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    }
+    carImage.src = "assets/zoomscape/body.png";
+    
+    car.texture = carTex;
+
     return car;
 }
 
-function initScene(canvas, car, wheel, vs_text, fs_text, line_text) {
+function initScene(canvas, car, wheel, line_text) {
     const bg = initBackground(line_text);
-    const prog = gl.createProgram();
-    const vs = tryCompileShader(gl.VERTEX_SHADER, vs_text);
-    const fs = tryCompileShader(gl.FRAGMENT_SHADER, fs_text);
-    compileAndRegister(prog, vs, fs, "meshDefault");
-
     const co = initCar(car, wheel);
 
     camera = new PerspectiveCamera(
@@ -184,9 +235,20 @@ function initScene(canvas, car, wheel, vs_text, fs_text, line_text) {
         //camera.world.rotateAbs(r);
     }
 
-    scene = new Scene(camera, prog);
+    const grid = new LightGridObject("grid", {
+        width: 30,
+        height: 30,
+        unit: 10,
+        color: [1, 0, 1, 1]
+    });
+    grid.transform
+        .rotateBy(quat.fromEuler(r, 90, 0, 0))
+        .translateBy([-125, -0.5, -125]);;
+
+    scene = new Scene(camera, PROGRAMS["meshDefault"].glref);
 
     scene.root.children.push(co);
+    scene.root.children.push(grid);
 
     renderer = new Renderer(1920, 1080,
         canvas.width, canvas.height,
