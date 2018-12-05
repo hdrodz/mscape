@@ -109,7 +109,7 @@ function initBackground(text) {
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
     
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, 256, 1, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, buff);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, 4096, 1, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, buff);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -124,7 +124,7 @@ function initBackground(text) {
         audioSesh.analyser.getByteTimeDomainData(buff);
         gl.activeTexture(gl.TEXTURE1);
         gl.bindTexture(gl.TEXTURE_2D, tex);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, 256, 1, 0, gl.LUMINANCE,
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, 8192, 1, 0, gl.LUMINANCE,
             gl.UNSIGNED_BYTE, buff);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -256,8 +256,8 @@ function initScene(canvas, car, wheel, line_text) {
         [BlendMode.ADD, BlendMode.NORMAL]
     );
     window.onresize = () => {
-        canvas.width = canvas.displayWidth;
-        canvas.height = canvas.displayHeight;
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
         renderer.resize(canvas.width, canvas.height);
     }
     render(0);
