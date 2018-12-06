@@ -114,7 +114,7 @@ class LightGridObject extends SceneObject {
                     vertices[vidx(x, y, i)] = v
                 });
 
-                const positions = repeat([x / this.width, y / this.height], 8);
+                const positions = repeat([x / (this.width - 1), y / (this.height)], 8);
                 positions.forEach((v, i) => gridPositions[gidx(x, y, i)] = v);
             }
         }
