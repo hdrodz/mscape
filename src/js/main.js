@@ -42,7 +42,7 @@ function loadAll(files) {
     ));
 }
 
-window.onload = () => {
+window.addEventListener('load', () => {
     const player = document.getElementById("player");
     audioSesh = new WebAudioSession(player, 8192);
 
@@ -80,7 +80,7 @@ window.onload = () => {
 
             initScene(canvas, car, wheel, line);
         });
-}
+});
 
 function initBackground(text) {
     id_vs = id_vs || tryCompileShader(gl.VERTEX_SHADER, IDENTITY_VS);
@@ -131,10 +131,14 @@ function initBackground(text) {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+        var reverseLightDirectionLocation =
+        gl.getUniformLocation(prog, "u_reverseLightDirection");
+
+        gl.uniform3fv(reverseLightDirectionLocation, [0, -5, 25]);
 
         const uTex = gl.getUniformLocation(prog, "tex");
         gl.uniform1i(uTex, 1);
-        
+
         const att = gl.getAttribLocation(prog, "position");
         gl.vertexAttribPointer(att, 2, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(att);
@@ -264,13 +268,6 @@ function initScene(canvas, car, wheel, line_text) {
 function render(now) {
     renderer.render(now);
     requestAnimationFrame(render);
-}
-
-function load_audio(file) {
-    let player = document.getElementById("player");
-    let srcurl = window.URL.createObjectURL(file);
-    player.src = srcurl;
-    player.load();
 }
 
 window.onkeydown = on_key;

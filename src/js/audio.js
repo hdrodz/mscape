@@ -62,4 +62,22 @@ class WebAudioSession {
         //     n = floor(F(n) * N / Fs)
         return this.analyser[Math.floor(f * this.analyser.fftSize / this.context.sampleRate)];
     }    
+
+    /**
+     * Get the lowest strength frequency among data
+     * @returns {Double} A double representing the minimum power value in 
+     *                  the scaling range of FFT data
+     */
+    getMinDecibalStrength(){
+        return this.analyser.getMinDecibalStrength;
+    }
+
+    /**
+     * Get the highest strength frequency among data
+     * @returns {Double} A double representing the maximum power value in 
+     *                  the scaling range of FFT data
+     */
+    getMaxDecibalStrength(){
+        return this.analyser.getMaxDecibalStrength;
+    }
 }
