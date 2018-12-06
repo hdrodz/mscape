@@ -167,8 +167,8 @@ function initGrid() {
         }
 
         update(now) {
-            const lastUnit = (-then / 50) % this.unit;
-            const thisUnit = (-now / 50) % this.unit;
+            const lastUnit = (-then / 15) % this.unit;
+            const thisUnit = (-now / 15) % this.unit;
             // Position moved, so update texture
             if (lastUnit < thisUnit) {
                 // Shift old data forward
@@ -206,7 +206,7 @@ function initGrid() {
     const r = quat.create();
     const grid = new BassGrid("grid", {
         width: 64,
-        height: 32,
+        height: 64,
         unit: 10,
         thickness: 0.125,
         color: [1, 0, 1, 1]
@@ -294,7 +294,7 @@ function initScene(canvas, car, wheel, line_text) {
 
     camera = new PerspectiveCamera(
         radians(49.1), 1920 / 1080,
-        0.1, 100
+        0.1, 500
     );
     camera.world.translateAbs([0, 10, -25])
         .rotateAbs(quat.fromEuler(quat.create(), -10, 180, 0));
