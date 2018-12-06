@@ -6,13 +6,19 @@
     <title>mscape</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" media="screen" href="css/main.css"/>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
 
     <!--Third-party JavaScript libraries-->
     <!--gl-matrix-->
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.7.1/gl-matrix-min.js"></script>
     <!--webgl-obj-loader-->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/webgl-obj-loader@1.1.3/dist/webgl-obj-loader.min.js"></script>
+    <!--jsmediatags-->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.0/jsmediatags.js"></script>
     <!--JavaScript source files-->
+    
+    <script type="text/javascript" src="js/ui.js"></script>
+
     <script type="text/javascript" src="js/util.js"></script>
     <script type="text/javascript" src="js/audio.js"></script>
 
@@ -28,18 +34,40 @@
     <script type="text/javascript" src="js/main.js"></script>
 </head>
 <body>
-    <audio id="player" controls>
+    <audio id="player" style="visibility: hidden;">
         Bummer&hellip; 😐 Your browser doesn't support the audio element. 
     </audio>
-    <input type="file" onchange="load_audio(this.files[0])">
+    <input id="file-input" type="file" onchange="load_audio(this.files[0])" accept="audio/*">
 
-    <canvas id="canvas">
+    <canvas class="overlay" id="canvas">
         Bummer&hellip; 😐 Your browser doesn't support the canvas element.
     </canvas>
 
-    <div class="overlay centered status" style="top: 100px;">
+    <div class="wide overlay centered status" style="top: 100px;">
         <p id="position">DUMMY</p>
         <p id="rotation">TEXT</p>
+    </div>
+
+    <div class="disappearing wide overlay centered shadow" style="bottom: 0px; top: 50%;" aria-orientation="vertical">
+        <div aria-orientation="vertical" class="overlay centered wide" style="bottom: 0px">
+            <div aria-orientation="horizontal">
+                <p id="artist-label" class="player-label">-</p>
+                <p id="song-label" class="player-label">-</p>
+                <p id="album-label" class="player-label">-</p>
+                <button id="play-button" class="player-button" onclick="play_pause();" disabled>
+                    <i id="play-pause-icon" class="fa fa-play" aria-hidden="true"></i>
+                </button>
+                <button class="player-button" onclick="pick_audio();">
+                    <i class="fa fa-folder-open" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div aria-orientation="horizontal">
+                <p id="current-time-label" class="seekbar-label">0:00</p>
+                <input id="player-seekbar" type="range" class="player-seekbar" min="0" max="0" value="0">
+                <p id="total-time-label" class="seekbar-label">0:00</p>
+            </div>
+            <div style="height:8pt"></div>
+        </div>
     </div>
 </body>
 </html>
