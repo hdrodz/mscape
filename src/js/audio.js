@@ -16,7 +16,6 @@ class WebAudioSession {
      * @param {Number} fftSize The size of the Fast Fourier Transform to use.
      */
     constructor(audioElement, fftSize) {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
         this.context = new AudioContext();
 
         // Create our nodes and set up our processing DAG
@@ -60,7 +59,7 @@ class WebAudioSession {
         // where Fs is the sample rate and N is the size of the FFT. Therefore,
         // going from a frequency to a bin is as simple as isolating for n:
         //     n = floor(F(n) * N / Fs)
-        return this.analyser[Math.floor(f * this.analyser.fftSize / this.context.sampleRate)];
+        return this.buffer[Math.floor(f * this.analyser.fftSize / this.context.sampleRate)];
     }    
 
     /**
