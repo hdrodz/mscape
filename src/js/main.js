@@ -42,7 +42,7 @@ function loadAll(files) {
     ));
 }
 
-window.onload = () => {
+window.addEventListener('load', () => {
     const player = document.getElementById("player");
     audioSesh = new WebAudioSession(player, 8192);
 
@@ -80,7 +80,7 @@ window.onload = () => {
 
             initScene(canvas, car, wheel, line);
         });
-}
+});
 
 function initBackground(text) {
     id_vs = id_vs || tryCompileShader(gl.VERTEX_SHADER, IDENTITY_VS);
@@ -265,13 +265,6 @@ function initScene(canvas, car, wheel, line_text) {
 function render(now) {
     renderer.render(now);
     requestAnimationFrame(render);
-}
-
-function load_audio(file) {
-    let player = document.getElementById("player");
-    let srcurl = window.URL.createObjectURL(file);
-    player.src = srcurl;
-    player.load();
 }
 
 window.onkeydown = on_key;
