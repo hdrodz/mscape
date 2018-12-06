@@ -177,7 +177,6 @@ function initCar(carObj, wheelObj) {
     const q = quat.fromEuler(quat.create(), 0, 90, 0);
     // Assign each update function
     wheels.forEach(w => {
-        console.debug(w);
         w.texture = wheelTex;
         w.transform.rotateAbs(q).scaleAbs([0.8, 0.8, 0.8]);
         w.update = now => {
