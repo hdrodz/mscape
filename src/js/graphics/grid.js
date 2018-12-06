@@ -69,6 +69,9 @@ class LightGridObject extends SceneObject {
     set shader(id) {
         this.shaderId = id;
         this.shaderProg = PROGRAMS[id].glref;
+
+        this.uProj = findUniform(this.shaderId, "proj");
+        this.uWorld = findUniform(this.shaderId, "world");
         this.uTrans = findUniform(this.shaderId, "transform");
         this.uColor = findUniform(this.shaderId, "color");
         this.attrVert = gl.getAttribLocation(this.shaderProg, "vertex");
@@ -201,12 +204,14 @@ class LightGridObject extends SceneObject {
             (this.width * (this.height - 1) * 2) * 4;
     }
 
-    render(now, transform) {
+    render(now, proj, world,transform) {
         gl.useProgram(this.shaderProg);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vbuf);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ibuf);
         gl.vertexAttribPointer(this.attrVert, 3, gl.FLOAT, false, 0, 0);
 
+        gl.uniformMatrix4fv(this.uProj, false, proj);
+        gl.uniformMatrix4fv(this.uWorld, false, world);
         gl.uniformMatrix4fv(this.uTrans, false, transform);
         gl.uniform4fv(this.uColor, this.color);
         gl.drawElements(gl.TRIANGLES, this.triangles * 3, gl.UNSIGNED_SHORT, 0);

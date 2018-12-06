@@ -77,6 +77,8 @@ class MeshObject extends SceneObject {
          */
         this.shaderProg = PROGRAMS[id].glref;
 
+        this.uProj = findUniform(this.shaderId, "projection");
+        this.uWorld = findUniform(this.shaderId, "world");
         /**
          * Location of the "transform" shader uniform variable.
          * @type {WebGLUniformLocation}
@@ -124,11 +126,13 @@ class MeshObject extends SceneObject {
      * @param {mat4} totalTrans Matrix representing the total transformation of
      *                          the mesh.
      */
-    render(now, totalTrans) {
+    render(now, proj, world, totalTrans) {
         // Activate the shader
         gl.useProgram(PROGRAMS[this.shaderId].glref);
         
         // Assign uniform values
+        gl.uniformMatrix4fv(this.uProj, false, proj);
+        gl.uniformMatrix4fv(this.uWorld, false, world);
         gl.uniformMatrix4fv(this.uTrans, false, totalTrans);
         gl.uniform1i(this.uTexture, 0);
 
