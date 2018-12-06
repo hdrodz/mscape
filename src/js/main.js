@@ -238,7 +238,10 @@ function initScene(canvas, car, wheel, line_text) {
         thickness: 0.125,
         color: [1, 0, 1, 1]
     });
-    grid.transform.rotateBy(quat.fromEuler(r, -90, 0, 0)).translateBy([0, -0.5,0 ]);
+    grid.transform.rotateBy(quat.fromEuler(r, -90, 0, 0));
+    grid.update = (now) => {
+        grid.transform.translateAbs([0, -0.5 - grid.thickness / 2, (-now / 50) % 10]);
+    }
 
     scene = new Scene(camera, PROGRAMS["meshDefault"].glref);
 
