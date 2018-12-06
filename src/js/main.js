@@ -150,6 +150,72 @@ function initBackground(text) {
 
 var scene;
 
+function initGrid() {
+    // ew.
+    class BassGrid extends LightGridObject {
+        constructor(name, params) {
+            super(name, params);
+            this.bassBuffers = new Uint8Array(this.width / 2 * this.height);
+            this.bassTexture = gl.createTexture();
+            this.bassPreprocess = new Array(this.width / 2  - 1);
+            gl.bindTexture(gl.TEXTURE_2D, this.bassTexture);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, this.width / 2, this.height, 
+                0, gl.LUMINANCE, gl.UNSIGNED_BYTE, this.bassBuffers);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        }
+
+        update(now) {
+            const lastUnit = (-then / 50) % this.unit;
+            const thisUnit = (-now / 50) % this.unit;
+            // Position moved, so update texture
+            if (lastUnit < thisUnit) {
+                // Shift old data forward
+                for (let i = this.height - 1; i > 0; --i) {
+                    for (let j = 0; j < this.width / 2; ++j) {
+                        this.bassBuffers[i * this.width / 2 + j] = 
+                            this.bassBuffers[(i - 1) * this.width / 2 + j];
+                    }
+                }
+                // Zero pre-processed data
+                this.bassPreprocess = this.bassPreprocess.map(_ => 0);
+                for (let f = 60; f < 250; ++f) {
+                    this.bassPreprocess[Math.floor((f - 60) / this.bassPreprocess.length)] += audioSesh.getFrequencyStrength(f);
+                }
+                for (let j = 1; j < this.bassPreprocess.length; ++j) {
+                    this.bassBuffers[j] = this.bassPreprocess[j - 1] / (250 - 60) * this.bassPreprocess.length;
+                }
+
+                gl.bindTexture(gl.TEXTURE_2D, this.bassTexture);
+                gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, this.width / 2, this.height, 
+                    gl.LUMINANCE, gl.UNSIGNED_BYTE, this.bassBuffers);
+            }
+
+            this.transform.translateAbs([5, -0.5 - this.thickness / 2, thisUnit]);
+        }
+
+        render(now, proj, world, transform) {
+            gl.useProgram(this.shaderProg);
+            gl.bindTexture(gl.TEXTURE_2D, this.bassTexture);
+            gl.uniform1f(gl.getUniformLocation(this.shaderProg, "half_width"), this.width / 2);
+            super.render(now, proj, world, transform);
+        }
+    }
+
+    const r = quat.create();
+    const grid = new BassGrid("grid", {
+        width: 64,
+        height: 32,
+        unit: 10,
+        thickness: 0.125,
+        color: [1, 0, 1, 1]
+    });
+    grid.transform.rotateBy(quat.fromEuler(r, -90, 0, 0));
+
+    return grid;
+}
+
 function initCar(carObj, wheelObj) {
     const wheelTex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, wheelTex);
@@ -224,6 +290,7 @@ function initCar(carObj, wheelObj) {
 function initScene(canvas, car, wheel, line_text) {
     const bg = initBackground(line_text);
     const co = initCar(car, wheel);
+    const grid = initGrid();
 
     camera = new PerspectiveCamera(
         radians(49.1), 1920 / 1080,
@@ -231,20 +298,6 @@ function initScene(canvas, car, wheel, line_text) {
     );
     camera.world.translateAbs([0, 10, -25])
         .rotateAbs(quat.fromEuler(quat.create(), -10, 180, 0));
-
-    const r = quat.create();
-
-    const grid = new LightGridObject("grid", {
-        width: 20,
-        height: 20,
-        unit: 10,
-        thickness: 0.125,
-        color: [1, 0, 1, 1]
-    });
-    grid.transform.rotateBy(quat.fromEuler(r, -90, 0, 0));
-    grid.update = (now) => {
-        grid.transform.translateAbs([5, -0.5 - grid.thickness / 2, (-now / 50) % 10]);
-    }
 
     scene = new Scene(camera, PROGRAMS["meshDefault"].glref);
 
@@ -265,7 +318,11 @@ function initScene(canvas, car, wheel, line_text) {
 }
 
 function render(now) {
+    // Update fft data
+    audioSesh.update();
+    // Render
     renderer.render(now);
+    then = now;
     requestAnimationFrame(render);
 }
 
@@ -312,8 +369,4 @@ function on_key(e) {
         break;
     }
     camera.world.translateBy(v).rotateBy(q);
-    const p = camera.world.translate;
-    const r = camera.world.rotate;
-    document.getElementById("position").innerText = `(${p[0]}, ${p[1]}, ${p[2]})`;
-    document.getElementById("rotation").innerText = `${r[0]} + ${r[1]}i + ${r[2]}j + ${r[3]}k`;
 }
