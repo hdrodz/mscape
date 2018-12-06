@@ -177,7 +177,6 @@ function initCar(carObj, wheelObj) {
     const q = quat.fromEuler(quat.create(), 0, 90, 0);
     // Assign each update function
     wheels.forEach(w => {
-        console.debug(w);
         w.texture = wheelTex;
         w.transform.rotateAbs(q).scaleAbs([0.8, 0.8, 0.8]);
         w.update = now => {
@@ -230,19 +229,22 @@ function initScene(canvas, car, wheel, line_text) {
         radians(49.1), 1920 / 1080,
         0.1, 100
     );
-    camera.world.translateAbs([0, 5, -35])
-        .rotateAbs(quat.fromEuler(quat.create(), 0, 180, 0));
+    camera.world.translateAbs([0, 10, -25])
+        .rotateAbs(quat.fromEuler(quat.create(), -10, 180, 0));
 
     const r = quat.create();
 
     const grid = new LightGridObject("grid", {
-        width: 29,
-        height: 29,
+        width: 20,
+        height: 20,
         unit: 10,
         thickness: 0.125,
         color: [1, 0, 1, 1]
     });
-    grid.transform.rotateBy(quat.fromEuler(r, -90, 0, 0)).translateBy([0, -0.5,0 ]);
+    grid.transform.rotateBy(quat.fromEuler(r, -90, 0, 0));
+    grid.update = (now) => {
+        grid.transform.translateAbs([5, -0.5 - grid.thickness / 2, (-now / 50) % 10]);
+    }
 
     scene = new Scene(camera, PROGRAMS["meshDefault"].glref);
 

@@ -47,7 +47,19 @@ function repeat(values, count) {
  */
 const flatIndex = (w, c, x, y, i) => (y * w + x) * c + i
 
+/**
+ * A light grid
+ */
 class LightGridObject extends SceneObject {
+    /**
+     * Create a new light grid
+     * @param {String} name Name of the object
+     * @param {Number} width Number of segments across the horizontal
+     * @param {Number} height Number of segments across the vertical
+     * @param {Number} unit Size of each segment
+     * @param {Array<Number>} color Color of the grid
+     * @param {Number} thickness Thickness of each line
+     */
     constructor (name, {width, height, unit = 1, color, thickness = 1}) {
         super(name);
         this.width = width;
@@ -60,9 +72,6 @@ class LightGridObject extends SceneObject {
         this.thickness = thickness;
 
         this.shader = "grid";
-
-        console.debug(`Generating ${width}x${height} grid`);
-        console.debug(`Unit: ${unit}`);
         this.genBuffers();
     }
 
@@ -85,8 +94,6 @@ class LightGridObject extends SceneObject {
         const vertices = new Float32Array(this.height * this.width * 8 * 3);
         const gridPositions = new Float32Array(this.height * this.width * 8 * 2);
 
-        console.debug(`${vertices.length / 3} vertices for grid "${this.name}" for a total of ${vertices.byteLength} bytes`);
-
         const vidx = flatIndex.bind(this, this.width, 8 * 3);
         const gidx = flatIndex.bind(this, this.width, 8 * 2);
 
@@ -102,7 +109,6 @@ class LightGridObject extends SceneObject {
                     0, 
                     this.thickness
                 );
-                console.debug(block);
                 block.forEach((v, i) => {
                     vertices[vidx(x, y, i)] = v
                 });
@@ -112,13 +118,15 @@ class LightGridObject extends SceneObject {
             }
         }
 
-        console.debug(vertices);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vbuf);
         gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.gbuf);
         gl.bufferData(gl.ARRAY_BUFFER, gridPositions, gl.STATIC_DRAW);
     }
 
+    /**
+     * Generate the element buffer
+     */
     genElements() {
         // There are (width - 1) horizontal line segments, and (height - 1)
         // vertical line segments. Each line segment takes two points.
@@ -184,27 +192,37 @@ class LightGridObject extends SceneObject {
             }
         }
 
-        if (eArr.length % 3 !== 0)
-            throw `${eArr.length} is not divisible by 3`;
-
         const elements = new Uint16Array(eArr);
-        console.debug(`${eArr.length} total elements, for a total of ${eArr.length / 3} triangles`);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ibuf);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, elements, gl.STATIC_DRAW);
     }
 
+    /**
+     * Generate all of the buffers
+     */
     genBuffers() {
         this.genVertices();
         this.genElements();
     }
 
+    /**
+     * Gets the number of triangles in this grid
+     * @returns {Number}
+     */
     get triangles() {
         return (this.width * this.height * 2) * 2 +
             ((this.width - 1) * this.height * 2) * 4 +
             (this.width * (this.height - 1) * 2) * 4;
     }
 
-    render(now, proj, world,transform) {
+    /**
+     * Render the mesh
+     * @param {Number} now Application time in seconds
+     * @param {mat4} proj Camera projection matrix
+     * @param {mat4} world Camera world matrix
+     * @param {mat4} transform Model transform matrix
+     */
+    render(now, proj, world, transform) {
         gl.useProgram(this.shaderProg);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vbuf);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ibuf);
