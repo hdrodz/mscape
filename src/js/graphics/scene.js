@@ -43,7 +43,7 @@ class SceneObject {
      *                          of this object's parent objects when walking
      *                          the tree.
      */
-    render(now, totalTrans) { }
+    render(now, proj, world, totalTrans) { }
 }
 
 /**
@@ -97,12 +97,10 @@ class Scene extends RenderLayer {
         
         // Reset the translation matrix and apply the camera matrix.
         mat4.identity(this.totalTrans);
-        mat4.mul(this.totalTrans, this.camera.proj, this.totalTrans);
-        mat4.mul(this.totalTrans, this.totalTrans, this.camera.world.inverseMatrix);
         // Use the default render program
         gl.useProgram(this.renderProgram);
         // Then render all of the nodes
-        this.renderNode(now, this.root);
+        this.renderNode(now, this.camera.proj, this.camera.world.inverseMatrix, this.root);
     }
 
     /**
@@ -121,13 +119,13 @@ class Scene extends RenderLayer {
      * @param {Number} now Application time, in seconds.
      * @param {SceneObject} node Node to render.
      */
-    renderNode(now, node) {
+    renderNode(now, proj, world, node) {
         // Apply this node's transformation matrix
         mat4.mul(this.totalTrans, this.totalTrans, node.transform.matrix);
         // Render the node and its children
-        node.render(now, this.totalTrans);
+        node.render(now, proj, world, this.totalTrans);
         const self = this;
-        node.children.forEach(child => self.renderNode(now, child));
+        node.children.forEach(child => self.renderNode(now, proj, world, child));
         // De-apply this node's transformation matrix
         mat4.mul(this.totalTrans, this.totalTrans, node.transform.inverseMatrix);
     }

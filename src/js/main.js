@@ -134,7 +134,7 @@ function initBackground(text) {
         var reverseLightDirectionLocation =
         gl.getUniformLocation(prog, "u_reverseLightDirection");
 
-        gl.uniform3fv(reverseLightDirectionLocation, [0, -5, 25]);
+        gl.uniform3fv(reverseLightDirectionLocation, [1, 2, 1]);
 
         const uTex = gl.getUniformLocation(prog, "tex");
         gl.uniform1i(uTex, 1);
