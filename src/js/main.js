@@ -230,24 +230,19 @@ function initScene(canvas, car, wheel, line_text) {
         radians(49.1), 1920 / 1080,
         0.1, 100
     );
-    camera.world.translateAbs([0, 5, -25])
+    camera.world.translateAbs([0, 5, -35])
         .rotateAbs(quat.fromEuler(quat.create(), 0, 180, 0));
 
     const r = quat.create();
-    co.update = (now) => {
-        //quat.fromEuler(r, now / 1000 * 50, 0, 0);
-        //camera.world.rotateAbs(r);
-    }
 
     const grid = new LightGridObject("grid", {
-        width: 30,
-        height: 30,
+        width: 29,
+        height: 29,
         unit: 10,
+        thickness: 0.125,
         color: [1, 0, 1, 1]
     });
-    grid.transform
-        .rotateBy(quat.fromEuler(r, 90, 0, 0))
-        .translateBy([-125, -0.5, -125]);;
+    grid.transform.rotateBy(quat.fromEuler(r, -90, 0, 0)).translateBy([0, -0.5,0 ]);
 
     scene = new Scene(camera, PROGRAMS["meshDefault"].glref);
 
