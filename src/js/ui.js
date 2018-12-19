@@ -82,6 +82,9 @@ function load_audio(file) {
         window.clearInterval(updatePlayerPosInterval);
     }
     updatePlayerPosInterval = window.setInterval(update_player_pos, 1000);
+    // Chrome has stricter rules for audio. Audio contexts created on page load
+    // are paused and cannot be resumed until user interaction.
+    audioSesh.context.resume();
 }
 
 function play_pause() {
