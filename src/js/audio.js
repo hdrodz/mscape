@@ -16,7 +16,8 @@ class WebAudioSession {
      * @param {Number} fftSize The size of the Fast Fourier Transform to use.
      */
     constructor(audioElement, fftSize) {
-        this.context = new AudioContext();
+        const Context = AudioContext || webkitAudioContext;
+        this.context = new Context();
 
         // Create our nodes and set up our processing DAG
         // We want our DAG to look like this:
